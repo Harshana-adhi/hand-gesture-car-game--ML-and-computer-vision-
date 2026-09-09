@@ -1,0 +1,45 @@
+{
+  "steering": {
+    "model_name": "LinearRegression",
+    "held_out_mae": 0.22980110031364603,
+    "n_train": 153,
+    "n_test": 52
+  },
+  "gestures": {
+    "classes": [
+      "accelerate",
+      "boost",
+      "brake",
+      "neutral"
+    ],
+    "cv_accuracy_mean": 0.9199999999999999,
+    "cv_accuracy_std": 0.06,
+    "cv_macro_f1": 0.919482686691698,
+    "confusion_matrix": [
+      [
+        22,
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        24,
+        0,
+        0
+      ],
+      [
+        3,
+        1,
+        21,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        25
+      ]
+    ]
+  }
+}
