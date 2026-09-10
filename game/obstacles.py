@@ -8,9 +8,11 @@ import random
 
 import pygame
 
+from game.car_sprite import draw_car_icon
+
 OBSTACLE_WIDTH = 50
 OBSTACLE_HEIGHT = 80
-OBSTACLE_COLOR = (220, 70, 70)
+OBSTACLE_COLORS = [(220, 70, 70), (210, 140, 40), (150, 90, 200), (90, 150, 90)]
 
 BASE_SPAWN_INTERVAL = 1.1   # seconds between spawns at t=0
 MIN_SPAWN_INTERVAL = 0.35   # spawn interval never drops below this
@@ -21,6 +23,7 @@ class Obstacle:
     def __init__(self, x: float, y: float):
         self.x = x
         self.y = y
+        self.color = random.choice(OBSTACLE_COLORS)
 
     def update(self, scroll_speed: float, dt: float):
         self.y += scroll_speed * dt
@@ -30,7 +33,7 @@ class Obstacle:
                             OBSTACLE_WIDTH, OBSTACLE_HEIGHT)
 
     def draw(self, surface: pygame.Surface):
-        pygame.draw.rect(surface, OBSTACLE_COLOR, self.rect(), border_radius=6)
+        draw_car_icon(surface, self.rect(), self.color, facing="down")
 
 
 class ObstacleField:

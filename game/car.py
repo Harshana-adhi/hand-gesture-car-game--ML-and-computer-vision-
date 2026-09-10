@@ -5,6 +5,8 @@ accelerate/brake/neutral/boost action signal.
 """
 import pygame
 
+from game.car_sprite import draw_car_icon
+
 CAR_WIDTH = 50
 CAR_HEIGHT = 80
 
@@ -78,4 +80,4 @@ class Car:
 
     def draw(self, surface: pygame.Surface):
         color = BOOST_COLOR if self.is_boosting else CAR_COLOR
-        pygame.draw.rect(surface, color, self.rect(), border_radius=6)
+        draw_car_icon(surface, self.rect(), color, facing="up")
