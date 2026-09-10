@@ -68,6 +68,16 @@ class ControlBridge:
         """
         return None
 
+    def get_raw_features(self):
+        """
+        Raw (tilt_angle, curl_vector) for the current frame, straight from
+        vision/features.py -- not run through either trained model. Used
+        by the in-game recalibration flow to record fresh samples. Returns
+        (None, None) when there's no live feature pipeline (e.g. the
+        keyboard stub) or no hand is currently detected.
+        """
+        return None, None
+
     def close(self):
         """Release any resources (camera, background thread, etc.)."""
         pass
@@ -158,6 +168,8 @@ class CVControlBridge(ControlBridge):
         self._hand_detected = False
         self._last_landmarks = None
         self._display_frame = None
+        self._last_tilt_angle = None
+        self._last_curl_vector = None
 
         self._stop_event = threading.Event()
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
@@ -184,12 +196,16 @@ class CVControlBridge(ControlBridge):
                 curl = finger_curl_vector(landmarks)
                 predicted_action = self._gesture_model.predict(np.array([curl]))[0]
             else:
+                angle = None
+                curl = None
                 raw_steering = 0.0
                 predicted_action = "neutral"
 
             with self._lock:
                 self._display_frame = display_frame
                 self._hand_detected = landmarks is not None
+                self._last_tilt_angle = angle
+                self._last_curl_vector = curl
                 self._raw_steering = raw_steering
                 self._smoothed_steering = (
                     STEERING_EMA_ALPHA * raw_steering
@@ -223,6 +239,11 @@ class CVControlBridge(ControlBridge):
     def get_camera_frame(self):
         with self._lock:
             return None if self._display_frame is None else self._display_frame.copy()
+
+    def get_raw_features(self):
+        with self._lock:
+            curl = None if self._last_curl_vector is None else list(self._last_curl_vector)
+            return self._last_tilt_angle, curl
 
     def close(self):
         self._stop_event.set()
