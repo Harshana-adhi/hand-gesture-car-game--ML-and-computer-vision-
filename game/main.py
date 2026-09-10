@@ -1,14 +1,14 @@
 """
-Endless driving game main loop. Phase 5: keyboard-controlled only
-(KeyboardControlBridge) -- Phase 6 swaps in the real hand-tracking bridge
-by changing one line (see CV_BRIDGE_TODO below).
-
-Controls (keyboard stand-in): Left/Right = steer, Up = accelerate,
-Down = brake, Space = boost.
+Endless driving game main loop. Controlled by real hand tracking
+(CVControlBridge) by default -- pass --keyboard to fall back to
+Left/Right/Up/Down/Space for debugging the game mechanics in isolation
+from the CV pipeline (Instruction #3).
 
 Run:
-    python -m game.main
+    python -m game.main              # hand-gesture control (default)
+    python -m game.main --keyboard   # keyboard fallback for debugging
 """
+import argparse
 import json
 import os
 import sys
@@ -16,7 +16,7 @@ import sys
 import pygame
 
 from game.car import Car
-from game.control_bridge import KeyboardControlBridge
+from game.control_bridge import CVControlBridge, KeyboardControlBridge
 from game.obstacles import ObstacleField
 
 SCREEN_WIDTH = 800
@@ -156,10 +156,12 @@ class Game:
 
 
 def main():
-    # CV_BRIDGE_TODO (Phase 6): swap this for game.control_bridge.CVControlBridge()
-    # (or whatever the trained-pipeline bridge class ends up being named) --
-    # everything else in Game stays the same since both implement ControlBridge.
-    bridge = KeyboardControlBridge()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--keyboard", action="store_true",
+                         help="Use keyboard controls instead of hand tracking (debugging).")
+    args = parser.parse_args()
+
+    bridge = KeyboardControlBridge() if args.keyboard else CVControlBridge()
     game = Game(bridge)
     game.run()
 
