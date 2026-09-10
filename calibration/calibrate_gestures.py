@@ -2,9 +2,10 @@
 Guided gesture calibration.
 
 Prompts you to hold each gesture (open palm = accelerate, fist = brake,
-relaxed resting hand = neutral, thumbs-up = boost) for a few seconds while
-it records finger-curl-vector samples, showing an on-screen prompt and
-countdown throughout.
+relaxed resting hand = neutral, four fingers = boost, two fingers =
+start-game / restart trigger) for a few seconds while it records
+finger-curl-vector samples, showing an on-screen prompt and countdown
+throughout.
 
 Vary your hand's position/distance slightly during each hold so the
 classifier doesn't overfit to one exact placement (Section 8 of CLAUDE.md).
@@ -19,7 +20,8 @@ Controls:
 
 Run:
     python -m calibration.calibrate_gestures
-    python -m calibration.calibrate_gestures --skip-boost   # skip the optional boost class
+    python -m calibration.calibrate_gestures --skip-boost    # skip the optional boost class
+    python -m calibration.calibrate_gestures --classes boost   # only (re)collect specific classes
 """
 import argparse
 import json
@@ -39,7 +41,8 @@ GESTURES = [
     ("accelerate", "OPEN PALM (fingers spread)"),
     ("brake", "FIST (fingers curled)"),
     ("neutral", "RELAXED RESTING HAND"),
-    ("boost", "THUMBS UP"),
+    ("boost", "FOUR FINGERS (index+middle+ring+pinky extended, thumb curled)"),
+    ("two_fingers", "TWO FINGERS (index + middle extended, peace sign)"),
 ]
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "gestures")
@@ -116,12 +119,23 @@ def _save_class_samples(class_name, samples):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--skip-boost", action="store_true",
-                         help="Skip the optional boost (thumbs-up) gesture class.")
+                         help="Skip the optional boost (four-fingers) gesture class.")
+    parser.add_argument("--classes", type=str, default=None,
+                         help="Comma-separated list of gesture classes to (re)collect this run "
+                              "(default: all). E.g. --classes two_fingers")
     args = parser.parse_args()
 
     gestures = GESTURES
     if args.skip_boost:
         gestures = [g for g in gestures if g[0] != "boost"]
+    if args.classes:
+        wanted = {c.strip().lower() for c in args.classes.split(",")}
+        available = {g[0] for g in GESTURES}
+        unknown = wanted - available
+        if unknown:
+            print(f"Unknown class(es) {unknown}. Available: {sorted(available)}")
+            return
+        gestures = [g for g in gestures if g[0] in wanted]
 
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():

@@ -60,6 +60,14 @@ class ControlBridge:
         """
         return True
 
+    def get_camera_frame(self):
+        """
+        Latest webcam frame as an (H, W, 3) uint8 RGB numpy array, already
+        mirrored for natural display, or None if no live camera feed is
+        available (e.g. the keyboard stub).
+        """
+        return None
+
     def close(self):
         """Release any resources (camera, background thread, etc.)."""
         pass
@@ -149,6 +157,7 @@ class CVControlBridge(ControlBridge):
         self._gesture_confidence = 1.0
         self._hand_detected = False
         self._last_landmarks = None
+        self._display_frame = None
 
         self._stop_event = threading.Event()
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
@@ -163,6 +172,9 @@ class CVControlBridge(ControlBridge):
 
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             landmarks = self._tracker.process(frame_rgb)
+            # Mirror for display only -- landmarks/features above were
+            # already computed from the raw, unflipped frame.
+            display_frame = cv2.flip(frame_rgb, 1)
 
             if landmarks is not None:
                 angle = tilt_angle(landmarks)
@@ -176,6 +188,7 @@ class CVControlBridge(ControlBridge):
                 predicted_action = "neutral"
 
             with self._lock:
+                self._display_frame = display_frame
                 self._hand_detected = landmarks is not None
                 self._raw_steering = raw_steering
                 self._smoothed_steering = (
@@ -206,6 +219,10 @@ class CVControlBridge(ControlBridge):
     def is_hand_detected(self) -> bool:
         with self._lock:
             return self._hand_detected
+
+    def get_camera_frame(self):
+        with self._lock:
+            return None if self._display_frame is None else self._display_frame.copy()
 
     def close(self):
         self._stop_event.set()
