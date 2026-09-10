@@ -31,8 +31,8 @@ machine learning happens.
 
 | | Problem | Model | Trained on | Result |
 |---|---|---|---|---|
-| 🎯 Steering | Regression | `LinearRegression` (beat a small `MLPRegressor` on held-out error) | My own calibration sweeps — hand held fully left / center / fully right, twice through | **Held-out MAE: 0.069** |
-| ✋ Gestures | Classification | `RandomForestClassifier` | ~375 of my own recorded hand shapes across 5 classes | **5-fold CV accuracy: 99.7%, macro F1: 0.995** |
+|  Steering | Regression | `LinearRegression` (beat a small `MLPRegressor` on held-out error) | My own calibration sweeps — hand held fully left / center / fully right, twice through | **Held-out MAE: 0.069** |
+|  Gestures | Classification | `RandomForestClassifier` | ~375 of my own recorded hand shapes across 5 classes | **5-fold CV accuracy: 99.7%, macro F1: 0.995** |
 
 Both models are calibrated specifically to my hand and lighting setup —
 recalibrating for someone else (or a different lighting setup) takes under a
@@ -167,5 +167,3 @@ gesture-car-game/
 └── download_model.py
 ```
 
-See [CLAUDE.md](CLAUDE.md) for the full original project brief, technical
-spec, and phased build plan this project was built against.
