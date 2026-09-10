@@ -25,9 +25,15 @@ _MODEL_PATH = os.path.join(
 class HandTracker:
     """Wraps MediaPipe HandLandmarker for single-hand tracking on live frames."""
 
+    # MediaPipe's palm detector is trained mostly on open/partially-open
+    # hand shapes; a tightly closed fist (the "brake" gesture) gives it
+    # less to work with and can dip below a stricter confidence threshold,
+    # dropping the frame as "no hand detected" before it ever reaches the
+    # trained gesture classifier. Lowered from the defaults (0.6/0.5) to
+    # make detection more forgiving of fist/curled poses.
     def __init__(self, model_path: str = _MODEL_PATH, max_hands: int = 1,
-                 min_detection_confidence: float = 0.6,
-                 min_presence_confidence: float = 0.5):
+                 min_detection_confidence: float = 0.4,
+                 min_presence_confidence: float = 0.35):
         if not os.path.exists(model_path):
             raise FileNotFoundError(
                 f"Hand landmark model not found at {model_path}. "

@@ -1,9 +1,9 @@
 {
   "steering": {
     "model_name": "LinearRegression",
-    "held_out_mae": 0.22980110031364603,
-    "n_train": 153,
-    "n_test": 52
+    "held_out_mae": 0.06926339766125973,
+    "n_train": 180,
+    "n_test": 61
   },
   "gestures": {
     "classes": [
@@ -13,16 +13,16 @@
       "neutral",
       "two_fingers"
     ],
-    "cv_accuracy_mean": 0.9777777777777779,
-    "cv_accuracy_std": 0.028109134757052248,
-    "cv_macro_f1": 0.9617452921762764,
+    "cv_accuracy_mean": 0.9933333333333334,
+    "cv_accuracy_std": 0.008164965809277286,
+    "cv_macro_f1": 0.9867500731635939,
     "confusion_matrix": [
       [
         23,
         0,
         1,
-        0,
-        1
+        1,
+        0
       ],
       [
         0,
@@ -32,9 +32,9 @@
         0
       ],
       [
-        3,
         0,
-        22,
+        0,
+        100,
         0,
         0
       ],
