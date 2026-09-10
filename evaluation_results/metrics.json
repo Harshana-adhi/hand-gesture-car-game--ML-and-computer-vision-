@@ -13,14 +13,14 @@
       "neutral",
       "two_fingers"
     ],
-    "cv_accuracy_mean": 0.9933333333333334,
-    "cv_accuracy_std": 0.008164965809277286,
-    "cv_macro_f1": 0.9867500731635939,
+    "cv_accuracy_mean": 0.9973333333333333,
+    "cv_accuracy_std": 0.005333333333333324,
+    "cv_macro_f1": 0.9950734062469209,
     "confusion_matrix": [
       [
-        23,
+        99,
         0,
-        1,
+        0,
         1,
         0
       ],
