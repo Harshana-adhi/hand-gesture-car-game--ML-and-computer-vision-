@@ -540,6 +540,15 @@ class Game:
             frame_surf = pygame.transform.smoothscale(frame_surf, new_size)
             pos = ((CAMERA_PANEL_WIDTH - new_size[0]) // 2, (SCREEN_HEIGHT - new_size[1]) // 2)
             self.screen.blit(frame_surf, pos)
+
+            bbox = self.bridge.get_hand_bbox()
+            if bbox is not None:
+                x0, y0, x1, y1 = bbox
+                box_rect = pygame.Rect(
+                    pos[0] + int(x0 * new_size[0]), pos[1] + int(y0 * new_size[1]),
+                    int((x1 - x0) * new_size[0]), int((y1 - y0) * new_size[1]),
+                )
+                self._draw_focus_box(self.screen, box_rect, (255, 40, 40))
         else:
             msg1 = self.small_font.render("NO CAMERA", True, TEXT_COLOR)
             msg2 = self.small_font.render("(keyboard mode)", True, TEXT_COLOR)
@@ -549,6 +558,17 @@ class Game:
         label = self.small_font.render("LIVE CAMERA", True, TEXT_COLOR)
         self.screen.blit(label, (10, 8))
         pygame.draw.rect(self.screen, LANE_LINE_COLOR, panel_rect, width=2)
+
+    @staticmethod
+    def _draw_focus_box(surface, rect, color, thickness=2, bracket_len=14):
+        """Camera-autofocus-style overlay: a faint full outline plus bright
+        corner brackets, drawn around the live-detected hand's bounding box."""
+        pygame.draw.rect(surface, color, rect, width=thickness)
+        x0, y0, x1, y1 = rect.left, rect.top, rect.right, rect.bottom
+        corners = [(x0, y0, 1, 1), (x1, y0, -1, 1), (x0, y1, 1, -1), (x1, y1, -1, -1)]
+        for cx, cy, dx, dy in corners:
+            pygame.draw.line(surface, color, (cx, cy), (cx + dx * bracket_len, cy), thickness + 1)
+            pygame.draw.line(surface, color, (cx, cy), (cx, cy + dy * bracket_len), thickness + 1)
 
     def _draw_debug_overlay(self):
         """

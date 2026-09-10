@@ -78,6 +78,15 @@ class ControlBridge:
         """
         return None, None
 
+    def get_hand_bbox(self):
+        """
+        Normalized (x0, y0, x1, y1) bounding box of the currently detected
+        hand, in the same mirrored coordinate space as get_camera_frame(),
+        or None if no hand is detected / no camera feed is available.
+        Used to draw a live detection-box overlay on the camera panel.
+        """
+        return None
+
     def close(self):
         """Release any resources (camera, background thread, etc.)."""
         pass
@@ -170,6 +179,7 @@ class CVControlBridge(ControlBridge):
         self._display_frame = None
         self._last_tilt_angle = None
         self._last_curl_vector = None
+        self._last_hand_bbox = None
 
         self._stop_event = threading.Event()
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
@@ -195,14 +205,23 @@ class CVControlBridge(ControlBridge):
 
                 curl = finger_curl_vector(landmarks)
                 predicted_action = self._gesture_model.predict(np.array([curl]))[0]
+
+                xs = [p[0] for p in landmarks]
+                ys = [p[1] for p in landmarks]
+                # Landmarks are normalized (0-1) in the raw, unflipped
+                # frame; display_frame is mirrored horizontally, so flip
+                # the x-extent to match what's actually shown on screen.
+                bbox = (1.0 - max(xs), min(ys), 1.0 - min(xs), max(ys))
             else:
                 angle = None
                 curl = None
+                bbox = None
                 raw_steering = 0.0
                 predicted_action = "neutral"
 
             with self._lock:
                 self._display_frame = display_frame
+                self._last_hand_bbox = bbox
                 self._hand_detected = landmarks is not None
                 self._last_tilt_angle = angle
                 self._last_curl_vector = curl
@@ -244,6 +263,10 @@ class CVControlBridge(ControlBridge):
         with self._lock:
             curl = None if self._last_curl_vector is None else list(self._last_curl_vector)
             return self._last_tilt_angle, curl
+
+    def get_hand_bbox(self):
+        with self._lock:
+            return self._last_hand_bbox
 
     def close(self):
         self._stop_event.set()
