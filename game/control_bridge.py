@@ -35,6 +35,23 @@ class ControlBridge:
         """Returns one of 'accelerate', 'brake', 'neutral', 'boost'."""
         raise NotImplementedError
 
+    def get_raw_steering(self) -> float:
+        """
+        Steering value before smoothing was applied (for the debug
+        overlay). Defaults to the smoothed value when a bridge has no
+        separate raw signal (e.g. the keyboard stub, which is already
+        discrete/unsmoothed).
+        """
+        return self.get_steering()
+
+    def get_gesture_confidence(self) -> float:
+        """
+        Confidence in [0, 1] behind the current get_action() result, for
+        the debug overlay. Defaults to 1.0 (fully confident) when a bridge
+        has no real notion of confidence, e.g. the keyboard stub.
+        """
+        return 1.0
+
     def is_hand_detected(self) -> bool:
         """
         Whether a hand is currently being tracked. Always True for the
@@ -129,6 +146,7 @@ class CVControlBridge(ControlBridge):
         self._raw_steering = 0.0
         self._gesture_history = deque(maxlen=GESTURE_VOTE_WINDOW)
         self._voted_action = "neutral"
+        self._gesture_confidence = 1.0
         self._hand_detected = False
         self._last_landmarks = None
 
@@ -165,15 +183,25 @@ class CVControlBridge(ControlBridge):
                     + (1 - STEERING_EMA_ALPHA) * self._smoothed_steering
                 )
                 self._gesture_history.append(predicted_action)
-                self._voted_action = Counter(self._gesture_history).most_common(1)[0][0]
+                vote_counts = Counter(self._gesture_history)
+                self._voted_action, top_votes = vote_counts.most_common(1)[0]
+                self._gesture_confidence = top_votes / len(self._gesture_history)
 
     def get_steering(self) -> float:
         with self._lock:
             return self._smoothed_steering
 
+    def get_raw_steering(self) -> float:
+        with self._lock:
+            return self._raw_steering
+
     def get_action(self) -> str:
         with self._lock:
             return self._voted_action
+
+    def get_gesture_confidence(self) -> float:
+        with self._lock:
+            return self._gesture_confidence
 
     def is_hand_detected(self) -> bool:
         with self._lock:

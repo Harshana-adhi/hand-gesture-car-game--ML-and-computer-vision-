@@ -58,6 +58,7 @@ class Game:
         pygame.display.set_caption("Hand-Gesture Car Game")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont("consolas", 24)
+        self.small_font = pygame.font.SysFont("consolas", 18)
         self.big_font = pygame.font.SysFont("consolas", 48)
 
         self.bridge = control_bridge
@@ -132,9 +133,11 @@ class Game:
             "Boost ready" if self.car.boost_ready else "Boost cooling down", True, TEXT_COLOR)
         self.screen.blit(boost_text, (16, 100))
 
+        self._draw_debug_overlay()
+
         if not self.bridge.is_hand_detected():
             warn = self.big_font.render("HAND NOT DETECTED", True, (255, 60, 60))
-            self.screen.blit(warn, warn.get_rect(center=(SCREEN_WIDTH // 2, 40)))
+            self.screen.blit(warn, warn.get_rect(center=(SCREEN_WIDTH // 2, 150)))
 
         if self.game_over:
             over_text = self.big_font.render("GAME OVER", True, (255, 80, 80))
@@ -143,6 +146,39 @@ class Game:
             self.screen.blit(restart_text, restart_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 30)))
 
         pygame.display.flip()
+
+    def _draw_debug_overlay(self):
+        """
+        Live proof that trained models -- not fixed rules -- are driving
+        the car: raw vs. smoothed steering, the voted gesture with its
+        confidence, and hand-detected status (CLAUDE.md Section 9).
+        """
+        hand = self.bridge.is_hand_detected()
+        raw_steer = self.bridge.get_raw_steering()
+        smoothed_steer = self.bridge.get_steering()
+        action = self.bridge.get_action()
+        confidence = self.bridge.get_gesture_confidence()
+
+        lines = [
+            "-- DEBUG --",
+            f"hand detected: {'YES' if hand else 'NO'}",
+            f"steering raw:      {raw_steer:+.2f}",
+            f"steering smoothed: {smoothed_steer:+.2f}",
+            f"gesture: {action} ({confidence * 100:.0f}%)",
+        ]
+        panel_width = 260
+        panel_x = SCREEN_WIDTH - panel_width - 10
+        line_height = 22
+        panel_height = 16 + line_height * len(lines)
+        panel = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
+        panel.fill((0, 0, 0, 140))
+        self.screen.blit(panel, (panel_x, 10))
+
+        hand_color = (100, 255, 100) if hand else (255, 90, 90)
+        for i, line in enumerate(lines):
+            color = hand_color if line.startswith("hand detected") else TEXT_COLOR
+            text = self.small_font.render(line, True, color)
+            self.screen.blit(text, (panel_x + 10, 18 + line_height * i))
 
     def run(self):
         running = True
